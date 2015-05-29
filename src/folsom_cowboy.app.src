@@ -4,6 +4,10 @@
   {description, ""},
   {vsn, git},
   {modules, []},
-  {applications, []},
+  {applications, [kernel,
+                  stdlib,
+                  jsx,
+                  folsom
+                 ]},
   {env, [{health, {erlang, node, []}}]}
  ]}.

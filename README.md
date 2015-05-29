@@ -1,24 +1,6 @@
 ### folsom_cowboy, a cowboy based wrapper for folsom
 
-This is an application that exposes folsom metrics via http using cowboy. It is a port of [folsom_webmachine] to [cowboy].
-
-#### installation
-
-Just add the folsom_cowboy to your app, in addition to its dependencies: [cowboy], [folsom].
-
-        %% It's not typical to do this manually, but here's how:
-        > lists:map(fun application:start/1,
-                [cowlib, ranch, cowboy, folsom, folsom_cowboy]).
-
-You can configure the `port`, `transport`, `transport_options`, `num_acceptors`, `dispatch` and `enable_jsonp` in the `folsom_cowboy` application environment. This is typically done in your application's `sys.config`, but can also be specified on the command line:
-
-        $ erl -pa ebin deps/*/ebin -folsom_cowboy port 8888
-
-* `transport` is the cowboy transport module (`cowboy_tcp_transport` or `cowboy_ssl_transport`)
-* `transport_options` is the options list to pass to that module (port is handled separately), such as `[{ip, {127, 0, 0, 1}}]`
-* `num_acceptors` is the number of acceptor processes to start for the listening socket (default is `100`)
-* `dispatch` is the `cowboy_http_module` dispatch tree, which you could use to change the URL scheme
-* `enable_jsonp` if true enable a flavour of [JSON with padding][jsonp] response (see [below](#jsonp)), false by default
+This is a cowboy handler that exposes folsom metrics via http using cowboy.
 
 #### api
 
