@@ -2,7 +2,7 @@
 {application, folsom_cowboy,
  [
   {description, ""},
-  {vsn, git},
+  {vsn, "1.0.0"},
   {modules, []},
   {registered, []},
   {applications, [kernel,
