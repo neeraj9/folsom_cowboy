@@ -33,22 +33,9 @@
 -define(APP, folsom_cowboy).
 
 start(_Type, _Args) ->
-    Cb = application:ensure_all_started(cowboy),
-    Cbku = application:ensure_all_started(cowboyku),
+    {ok, _} = application:ensure_all_started(cowboy),
 
-    case {Cb, Cbku} of
-        {{ok, _}, {error, _}} ->
-            Router = cowboy_router,
-            Cowboy = cowboy;
-        {{error, _}, {ok, _}} ->
-            Router = cowboyku_router,
-            Cowboy = cowboyku;
-        _ ->
-            Cowboy = Router = bleh,
-            exit(no_cowboy_variant)
-    end,
-
-    Dispatch = Router:compile(folsom_cowboy:dispatch()),
+    Dispatch = cowboy_router:compile(folsom_cowboy:dispatch()),
 
     Env = {env, [{dispatch, Dispatch}] },
 
@@ -60,7 +47,7 @@ start(_Type, _Args) ->
                 [Env]
         end,
 
-    {ok, _Pid} = Cowboy:start_http(folsom_cowboy_listener, env(num_acceptors),
+    {ok, _Pid} = cowboy:start_http(folsom_cowboy_listener, env(num_acceptors),
                                    [{port, env(port)}, {ip, env(ip)}], ProtoOpts),
 
     error_logger:warning_msg("pid ~p", [_Pid]),
