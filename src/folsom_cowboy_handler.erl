@@ -51,12 +51,10 @@ get_metric(metric, Req) ->
     reply(Req1, sanitize(get_metric_data(MetricExists, Id1)));
 get_metric(ping, Req) ->
     reply(Req, <<"pong">>);
-%% get_metric(port, Req) ->
-%%     %% this won't work with JSX and is in any case unsafe, disabling
-%%     reply(Req, folsom_vm_metrics:get_port_info());
-%% get_metric(process, Req) ->
-%%     %% this won't work with JSX and is in any case unsafe, disabling
-%%     reply(Req, folsom_vm_metrics:get_process_info());
+get_metric(port, Req) ->
+    reply(Req, sanitize(folsom_vm_metrics:get_port_info()));
+get_metric(process, Req) ->
+    reply(Req, sanitize(folsom_vm_metrics:get_process_info()));
 get_metric(statistics, Req) ->
     reply(Req, sanitize(folsom_vm_metrics:get_statistics()));
 get_metric(system, Req) ->

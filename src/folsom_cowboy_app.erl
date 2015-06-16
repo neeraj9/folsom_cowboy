@@ -33,19 +33,37 @@
 -define(APP, folsom_cowboy).
 
 start(_Type, _Args) ->
-    Dispatch = cowboy_router:compile(env(dispatch)),
+    Cb = application:ensure_all_started(cowboy),
+    Cbku = application:ensure_all_started(cowboyku),
+
+    case {Cb, Cbku} of
+        {{ok, _}, {error, _}} ->
+            Router = cowboy_router,
+            Cowboy = cowboy;
+        {{error, _}, {ok, _}} ->
+            Router = cowboyku_router,
+            Cowboy = cowboyku;
+        _ ->
+            Cowboy = Router = bleh,
+            exit(no_cowboy_variant)
+    end,
+
+    Dispatch = Router:compile(folsom_cowboy:dispatch()),
 
     Env = {env, [{dispatch, Dispatch}] },
 
-    ProtoOpts = case application:get_env(?APP, enable_jsonp, false) of
-        true ->
-            [Env, {onresponse, fun maybe_add_padding/4}];
-        false ->
-            [Env]
-    end,
+    ProtoOpts =
+        case application:get_env(?APP, enable_jsonp, false) of
+            true ->
+                [Env, {onresponse, fun maybe_add_padding/4}];
+            false ->
+                [Env]
+        end,
 
-    {ok, _Pid} = cowboy:start_http(folsom_cowboy_listener, env(num_acceptors),
-                      [{port, env(port)}, {ip, env(ip)}], ProtoOpts),
+    {ok, _Pid} = Cowboy:start_http(folsom_cowboy_listener, env(num_acceptors),
+                                   [{port, env(port)}, {ip, env(ip)}], ProtoOpts),
+
+    error_logger:warning_msg("pid ~p", [_Pid]),
     folsom_cowboy_sup:start_link().
 
 stop(_State) ->
@@ -82,5 +100,3 @@ maybe_add_padding(Code, Headers, Body, Req) ->
                     Req3
             end
     end.
-
-    
