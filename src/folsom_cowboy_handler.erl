@@ -5,6 +5,8 @@
          handle/2,
          terminate/3]).
 
+-define(scheds, scheds).
+
 init({_Any, http}, Req, [Key]) ->
     {ok, Req, Key}.
 
@@ -20,31 +22,57 @@ reply(Req, undefined) ->
 reply(Req, Metric) ->
     cowboy_req:reply(200, [], jsx:encode(Metric), Req).
 
+sanitize({Key, Value}) when is_list(Key) ->
+    {list_to_binary(Key), sanitize(Value)};
+sanitize({Key, Value}) when is_atom(Key) ->
+    {sanitize(Key), sanitize(Value)};
+sanitize({Key, Value}) when is_integer(Key) ->
+    Key1 = iolist_to_binary(io_lib:format("~p", [Key])),
+    {Key1, sanitize(Value)};
+sanitize({Key, Value}) ->
+    {Key, sanitize(Value)};
+sanitize(Result) when is_list(Result) ->
+    [sanitize(Item) || Item <- Result];
+sanitize(Result) when is_atom(Result) ->
+    iolist_to_binary(io_lib:format("~p", [Result]));
+sanitize(Result) ->
+    Result.
+
 get_metric(health, Req) ->
     {M, F, A} = application:get_env(folsom_cowboy, health, {erlang, node, []}),
     Result = erlang:apply(M, F, A),
-    reply(Req, [{<<"health">>, Result}]);
+    reply(Req, [{<<"health">>, sanitize(Result)}]);
 get_metric(memory, Req) ->
-    reply(Req, folsom_vm_metrics:get_memory());
+    reply(Req, sanitize(folsom_vm_metrics:get_memory()));
 get_metric(metrics, Req) ->
     {Info, Req1} = qs_val(<<"info">>, Req),
-    reply(Req1, get_metrics(Info));
+    reply(Req1, sanitize(get_metrics(Info)));
 get_metric(metric, Req) ->
     {Id, Req1} = binding(metric_id, Req),
     {MetricExists, Id1} = metric_exists(Id),
-    reply(Req1, get_metric_data(MetricExists, Id1));
+    reply(Req1, sanitize(get_metric_data(MetricExists, Id1)));
 get_metric(ping, Req) ->
     reply(Req, <<"pong">>);
 get_metric(port, Req) ->
-    reply(Req, folsom_vm_metrics:get_port_info());
+    reply(Req, sanitize(folsom_vm_metrics:get_port_info()));
 get_metric(process, Req) ->
-    reply(Req, folsom_vm_metrics:get_process_info());
+    reply(Req, sanitize(folsom_vm_metrics:get_process_info()));
 get_metric(statistics, Req) ->
-    reply(Req, folsom_vm_metrics:get_statistics());
+    reply(Req, sanitize(folsom_vm_metrics:get_statistics()));
 get_metric(system, Req) ->
-    reply(Req, folsom_vm_metrics:get_system_info());
+    NewScheds = lists:sort(erlang:statistics(scheduler_wall_time)),
+    Scheds =
+        case folsom_cowboy_state_keeper:get(?scheds) of
+            not_found ->
+                [];
+            OldScheds ->
+                [diff_scheds(OldScheds, NewScheds)]
+        end,
+    folsom_cowboy_state_keeper:put(?scheds, NewScheds),
+
+    reply(Req, sanitize(folsom_vm_metrics:get_system_info() ++ Scheds));
 get_metric(ets, Req) ->
-    reply(Req, folsom_vm_metrics:get_ets_info());
+    reply(Req, sanitize(folsom_vm_metrics:get_ets_info()));
 get_metric(dets, Req) ->
     reply(Req, folsom_vm_metrics:get_dets_info());
 get_metric(_, Req) ->
@@ -86,6 +114,16 @@ binding(Key, Req) ->
 
 qs_val(Key, Req) ->
     cowboy_req:qs_val(Key, Req).
+
+%% do we care about the load on particular schedulers?
+%% assuming no, so delivering the average across them
+diff_scheds(Old, New) ->
+    Diff = lists:map(fun({{I, A0, T0}, {I, A1, T1}}) ->
+                             {I, (A1 - A0)/(T1 - T0)}
+                     end,
+                     lists:zip(Old,New)),
+    Avg = lists:sum([V||{_,V} <- Diff])/length(Diff),
+    {sched_util, trunc(Avg * 100)}.
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

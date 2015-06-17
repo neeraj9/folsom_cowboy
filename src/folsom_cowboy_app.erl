@@ -33,19 +33,26 @@
 -define(APP, folsom_cowboy).
 
 start(_Type, _Args) ->
-    Dispatch = cowboy_router:compile(env(dispatch)),
+    {ok, _} = application:ensure_all_started(cowboy),
+
+    Dispatch = cowboy_router:compile(folsom_cowboy:dispatch()),
 
     Env = {env, [{dispatch, Dispatch}] },
 
-    ProtoOpts = case application:get_env(?APP, enable_jsonp, false) of
-        true ->
-            [Env, {onresponse, fun maybe_add_padding/4}];
-        false ->
-            [Env]
-    end,
+    ProtoOpts =
+        case application:get_env(?APP, enable_jsonp, false) of
+            true ->
+                [Env, {onresponse, fun maybe_add_padding/4}];
+            false ->
+                [Env]
+        end,
 
     {ok, _Pid} = cowboy:start_http(folsom_cowboy_listener, env(num_acceptors),
-                      [{port, env(port)}, {ip, env(ip)}], ProtoOpts),
+                                   [{port, env(port)}, {ip, env(ip)}], ProtoOpts),
+
+    %% hopefully this is safe to leave on all the time.
+    erlang:system_flag(scheduler_wall_time, true),
+
     folsom_cowboy_sup:start_link().
 
 stop(_State) ->
@@ -82,5 +89,3 @@ maybe_add_padding(Code, Headers, Body, Req) ->
                     Req3
             end
     end.
-
-    

@@ -3,12 +3,19 @@
  [
   {description, ""},
   {vsn, "1.0.0"},
+  {mod, {folsom_cowboy_app, []}},
   {modules, []},
   {registered, []},
   {applications, [kernel,
-                  stdlib,
-                  jsx,
-                  folsom
+                  stdlib
                  ]},
-  {env, [{health, {erlang, node, []}}]}
+  {env, [
+         {health, {erlang, node, []}},
+         {port, 5565},
+         {num_acceptors, 16},
+         {ip, {127,0,0,1}},
+         %% if you want _process and _port to work, you'll need to
+         %% override this in your sys.config
+         {safe, true}
+        ]}
  ]}.
