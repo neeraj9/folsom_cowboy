@@ -50,7 +50,9 @@ start(_Type, _Args) ->
     {ok, _Pid} = cowboy:start_http(folsom_cowboy_listener, env(num_acceptors),
                                    [{port, env(port)}, {ip, env(ip)}], ProtoOpts),
 
-    error_logger:warning_msg("pid ~p", [_Pid]),
+    %% hopefully this is safe to leave on all the time.
+    erlang:system_flag(scheduler_wall_time, true),
+
     folsom_cowboy_sup:start_link().
 
 stop(_State) ->

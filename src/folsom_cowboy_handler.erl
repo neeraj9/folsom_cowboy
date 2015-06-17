@@ -5,6 +5,8 @@
          handle/2,
          terminate/3]).
 
+-define(scheds, scheds).
+
 init({_Any, http}, Req, [Key]) ->
     {ok, Req, Key}.
 
@@ -58,7 +60,17 @@ get_metric(process, Req) ->
 get_metric(statistics, Req) ->
     reply(Req, sanitize(folsom_vm_metrics:get_statistics()));
 get_metric(system, Req) ->
-    reply(Req, sanitize(folsom_vm_metrics:get_system_info()));
+    NewScheds = lists:sort(erlang:statistics(scheduler_wall_time)),
+    Scheds =
+        case folsom_cowboy_state_keeper:get(?scheds) of
+            not_found ->
+                [];
+            OldScheds ->
+                [diff_scheds(OldScheds, NewScheds)]
+        end,
+    folsom_cowboy_state_keeper:put(?scheds, NewScheds),
+
+    reply(Req, sanitize(folsom_vm_metrics:get_system_info() ++ Scheds));
 get_metric(ets, Req) ->
     reply(Req, sanitize(folsom_vm_metrics:get_ets_info()));
 get_metric(dets, Req) ->
@@ -102,6 +114,16 @@ binding(Key, Req) ->
 
 qs_val(Key, Req) ->
     cowboy_req:qs_val(Key, Req).
+
+%% do we care about the load on particular schedulers?
+%% assuming no, so delivering the average across them
+diff_scheds(Old, New) ->
+    Diff = lists:map(fun({{I, A0, T0}, {I, A1, T1}}) ->
+                             {I, (A1 - A0)/(T1 - T0)}
+                     end,
+                     lists:zip(Old,New)),
+    Avg = lists:sum([V||{_,V} <- Diff])/length(Diff),
+    {sched_util, trunc(Avg * 100)}.
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
