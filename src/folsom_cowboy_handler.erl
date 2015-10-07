@@ -36,7 +36,7 @@ sanitize(Result) when is_list(Result) ->
 sanitize(Bool) when is_boolean(Bool) ->
   Bool;
 sanitize(Result) when is_atom(Result) ->
-    iolist_to_binary(io_lib:format("~p", [Result]));
+    iolist_to_binary(io_lib:format("~s", [Result]));
 sanitize(Result) ->
     Result.
 
