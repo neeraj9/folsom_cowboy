@@ -33,6 +33,8 @@ sanitize({Key, Value}) ->
     {Key, sanitize(Value)};
 sanitize(Result) when is_list(Result) ->
     [sanitize(Item) || Item <- Result];
+sanitize(Bool) when is_boolean(Bool) ->
+  Bool;
 sanitize(Result) when is_atom(Result) ->
     iolist_to_binary(io_lib:format("~p", [Result]));
 sanitize(Result) ->
