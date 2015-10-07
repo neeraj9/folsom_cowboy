@@ -40,6 +40,15 @@ sanitize(Result) when is_atom(Result) ->
 sanitize(Result) ->
     Result.
 
+nums_to_string({Key, Value}) ->
+    {Key, nums_to_string(Value)};
+nums_to_string(Result) when is_list(Result) ->
+    [nums_to_string(Item) || Item <- Result];
+nums_to_string(Result) when is_number(Result) ->
+    iolist_to_binary(io_lib:format("~p", [Result]));
+nums_to_string(Result) ->
+    Result.
+
 get_metric(health, Req) ->
     {M, F, A} = application:get_env(folsom_cowboy, health, {erlang, node, []}),
     Result = erlang:apply(M, F, A),
@@ -52,7 +61,7 @@ get_metric(metrics, Req) ->
 get_metric(metric, Req) ->
     {Id, Req1} = binding(metric_id, Req),
     {MetricExists, Id1} = metric_exists(Id),
-    reply(Req1, sanitize(get_metric_data(MetricExists, Id1)));
+    reply(Req1, nums_to_string(sanitize(get_metric_data(MetricExists, Id1))));
 get_metric(ping, Req) ->
     reply(Req, <<"pong">>);
 get_metric(port, Req) ->
