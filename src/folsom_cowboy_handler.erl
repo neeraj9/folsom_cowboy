@@ -115,7 +115,8 @@ binding(Key, Req) ->
     {cowboy_req:binding(Key, Req), Req}.
 
 qs_val(Key, Req) ->
-    cowboy_req:qs_val(Key, Req).
+    Val = proplists:get_value(Key, cowboy_req:parse_qs(Req)),
+    {Val, Req}.
 
 %% do we care about the load on particular schedulers?
 %% assuming no, so delivering the average across them

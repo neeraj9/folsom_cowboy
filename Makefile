@@ -16,7 +16,7 @@ run: cleanapp compileapp
 	$(REBAR) shell
 
 repl: cleanapp compileapp
-	erl -pa _build/default/lib/*/ebin
+	erl -pa _build/default/lib/*/ebin -eval "folsom_cowboy:start()."
 
 deps:
 	$(REBAR) update
