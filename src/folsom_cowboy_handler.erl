@@ -1,26 +1,17 @@
 -module(folsom_cowboy_handler).
--behaviour(cowboy_http_handler).
 
--export([init/3,
-         handle/2,
-         terminate/3]).
+-export([init/2]).
 
 -define(scheds, scheds).
 
-init({_Any, http}, Req, [Key]) ->
-    {ok, Req, Key}.
-
-handle(Req, Key) ->
+init(Req, [Key|_T] = Opts) ->
     {ok, Req1} = get_metric(Key, Req),
-    {ok, Req1, Key}.
-
-terminate(_Reason, _Req, _State) ->
-    ok.
+    {ok, Req1, Opts}.
 
 reply(Req, undefined) ->
-    cowboy_req:reply(404, [], [], Req);
+    {ok, cowboy_req:reply(404, [], [], Req)};
 reply(Req, Metric) ->
-    cowboy_req:reply(200, [], jsx:encode(Metric), Req).
+    {ok, cowboy_req:reply(200, [], jsx:encode(Metric), Req)}.
 
 sanitize({Key, Value}) when is_list(Key) ->
     {list_to_binary(Key), sanitize(Value)};
@@ -121,7 +112,7 @@ metric_exists(Id) when is_atom(Id) ->
     {folsom_metrics:metric_exists(Id), Id}.
 
 binding(Key, Req) ->
-    cowboy_req:binding(Key, Req).
+    {cowboy_req:binding(Key, Req), Req}.
 
 qs_val(Key, Req) ->
     cowboy_req:qs_val(Key, Req).

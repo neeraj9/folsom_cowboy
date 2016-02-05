@@ -1,6 +1,11 @@
 -module(folsom_cowboy).
 
--export([dispatch/0]).
+-export([dispatch/0, start/0]).
+
+start() ->
+    application:start(bear),
+    folsom:start(),
+    application:start(folsom_cowboy).
 
 dispatch() ->
     Dangerous =
