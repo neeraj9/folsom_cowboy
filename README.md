@@ -1,6 +1,6 @@
 ### folsom_cowboy, a cowboy based wrapper for folsom
 
-This is a cowboy handler that exposes folsom metrics via http using cowboy.
+This is a cowboy handler that exposes folsom metrics via http using cowboy(cowboy 2.0.0).
 
 #### api
 
