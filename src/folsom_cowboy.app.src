@@ -7,7 +7,9 @@
   {modules, []},
   {registered, []},
   {applications, [kernel,
-                  stdlib
+                  stdlib,
+                  bear,
+                  folsom
                  ]},
   {env, [
          {health, {erlang, node, []}},
