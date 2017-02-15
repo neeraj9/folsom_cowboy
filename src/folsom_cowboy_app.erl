@@ -66,7 +66,7 @@ maybe_add_padding(Code, Headers, Body, Req) ->
         _ ->
             case re:run(Padding, "^\\w+$", [global, notempty, unicode]) of
                 nomatch ->
-                    Body2 = mochijson2:encode(<<"Bad padding: ", Padding/binary>>),
+                    Body2 = fc_mochijson2:encode(<<"Bad padding: ", Padding/binary>>),
                     Headers2 = lists:keyreplace(
                                  <<"content-length">>, 1, Headers,
                                  {<<"content-length">>, integer_to_list(iolist_size(Body2))}),

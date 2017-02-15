@@ -34,13 +34,13 @@ init({_Any, http}, Req, []) ->
 handle(Req, State) ->
     {ok, Req2} = case cowboy_req:binding(metric_id, Req) of
 		     {undefined, Req1} ->
-			 cowboy_req:reply(404, [], mochijson2:encode([{error, nonexistent_metric}]), Req1);
+			 cowboy_req:reply(404, [], fc_mochijson2:encode([{error, nonexistent_metric}]), Req1);
 		     {Id, Req1} ->
 			 case metric_exists(Id) of
 			     {true, Id1} ->
-				 cowboy_req:reply(200, [], mochijson2:encode(get_metric_data(Id1)), Req1);
+				 cowboy_req:reply(200, [], fc_mochijson2:encode(get_metric_data(Id1)), Req1);
 			     {false, _} ->
-				 cowboy_req:reply(404, [], mochijson2:encode([{error, nonexistent_metric}]), Req1)
+				 cowboy_req:reply(404, [], fc_mochijson2:encode([{error, nonexistent_metric}]), Req1)
 			 end
 		 end,
     {ok, Req2, State}.

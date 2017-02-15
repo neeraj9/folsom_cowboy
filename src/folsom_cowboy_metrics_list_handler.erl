@@ -43,6 +43,6 @@ get_request({<<"true">>, Req}) ->
     Metrics = [{M, proplists:delete(tags, List)} ||
                {M, List} <- folsom_metrics:get_metrics_info()],
 
-    cowboy_req:reply(200, [], mochijson2:encode(Metrics), Req);
+    cowboy_req:reply(200, [], fc_mochijson2:encode(Metrics), Req);
 get_request({_, Req}) ->
-    cowboy_req:reply(200, [], mochijson2:encode(folsom_metrics:get_metrics()), Req). 
+    cowboy_req:reply(200, [], fc_mochijson2:encode(folsom_metrics:get_metrics()), Req). 
