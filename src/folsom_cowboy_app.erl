@@ -37,18 +37,20 @@ start(_Type, _Args) ->
 
     Dispatch = cowboy_router:compile(folsom_cowboy:dispatch()),
 
-    Env = {env, [{dispatch, Dispatch}] },
+    Env = #{dispatch => Dispatch},
 
     ProtoOpts =
         case application:get_env(?APP, enable_jsonp, false) of
             true ->
-                [Env, {onresponse, fun maybe_add_padding/4}];
+                #{env => Env, onresponse => fun maybe_add_padding/4};
             false ->
-                [Env]
+                #{env => Env}
         end,
 
-    {ok, _Pid} = cowboy:start_http(folsom_cowboy_listener, env(num_acceptors),
-                                   [{port, env(port)}, {ip, env(ip)}], ProtoOpts),
+    {ok, _Pid} = cowboy:start_clear(folsom_cowboy_listener,
+                                    [{port, env(port)}, {ip, env(ip)},
+                                     {num_acceptors, env(num_acceptors)}],
+                                    ProtoOpts),
 
     %% hopefully this is safe to leave on all the time.
     erlang:system_flag(scheduler_wall_time, true),
@@ -77,7 +79,8 @@ maybe_add_padding(Code, Headers, Body, Req) ->
                     Headers2 = lists:keyreplace(
                                  <<"content-length">>, 1, Headers,
                                  {<<"content-length">>, integer_to_list(iolist_size(Body2))}),
-                    {ok, RE} = cowboy_req:reply(400, Headers2, Body2, Req2),
+                    {ok, RE} = cowboy_req:reply(400, maps:from_list(Headers2),
+                                                Body2, Req2),
                     RE;
                 _ ->
                     Padded = [Padding, "=", Body],
@@ -85,7 +88,9 @@ maybe_add_padding(Code, Headers, Body, Req) ->
                     Headers2 = lists:keyreplace(
                                  <<"content-length">>, 1, Headers,
                                  {<<"content-length">>, integer_to_list(iolist_size(Padded))}),
-                    {ok, Req3} = cowboy_req:reply(Code, Headers2, Padded, Req2),
+                    {ok, Req3} = cowboy_req:reply(Code,
+                                                  maps:from_list(Headers2),
+                                                  Padded, Req2),
                     Req3
             end
     end.

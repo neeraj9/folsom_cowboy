@@ -9,9 +9,9 @@ init(Req, [Key|_T] = Opts) ->
     {ok, Req1, Opts}.
 
 reply(Req, undefined) ->
-    {ok, cowboy_req:reply(404, [], [], Req)};
+    {ok, cowboy_req:reply(404, #{}, [], Req)};
 reply(Req, Metric) ->
-    {ok, cowboy_req:reply(200, [], jsx:encode(Metric), Req)}.
+    {ok, cowboy_req:reply(200, #{}, jsx:encode(Metric), Req)}.
 
 sanitize({Key, Value}) when is_list(Key) ->
     {list_to_binary(Key), sanitize(Value)};
