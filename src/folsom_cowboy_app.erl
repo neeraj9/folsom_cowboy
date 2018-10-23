@@ -49,6 +49,7 @@ start(_Type, _Args) ->
     folsom_cowboy_sup:start_link().
 
 stop(_State) ->
+    cowboy:stop_listener(folsom_cowboy_listener),
     ok.
 
 env(Name) ->
